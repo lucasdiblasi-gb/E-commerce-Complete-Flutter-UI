@@ -1,0 +1,9 @@
+name: 'Identik AI Local Test'
+description: 'Teste local da Identik AI'
+inputs:
+  openai-api-key:
+    description: 'API Key'
+    required: true
+runs:
+  using: 'node20'
+  main: 'index.js'

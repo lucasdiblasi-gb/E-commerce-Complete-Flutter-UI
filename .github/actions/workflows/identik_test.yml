@@ -1,0 +1,25 @@
+name: Teste Local Identik
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ai_review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do App
+        uses: actions/checkout@v4
+
+      # Importante: Como a Action é local e usa Node.js, 
+      # precisamos instalar as dependências dela antes de rodar
+      - name: Install Action Dependencies
+        run: |
+          cd .github/actions/identik-reviewer
+          npm install
+
+      - name: Rodar Identik AI Local
+        uses: ./.github/actions/identik-reviewer
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
