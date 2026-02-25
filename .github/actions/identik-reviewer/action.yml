@@ -2,7 +2,10 @@ name: 'Identik AI Local Test'
 description: 'Teste local da Identik AI'
 inputs:
   openai-api-key:
-    description: 'API Key'
+    description: 'Sua chave (OpenAI ou GitHub Token para Models)'
+    required: true
+  github-token:
+    description: 'Token do GitHub para comentar no PR'
     required: true
 runs:
   using: 'node20'

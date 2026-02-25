@@ -4,11 +4,15 @@ const { OpenAI } = require('openai');
 
 async function run() {
   try {
+    // 1. Pegamos os valores dos INPUTS definidos no action.yml
     const apiKey = core.getInput('openai-api-key');
     const token = core.getInput('github-token');
+    
     const octokit = github.getOctokit(token);
+    
+    // 2. Usamos a variável 'apiKey' que pegamos acima
     const openai = new OpenAI({
-       apiKey: process.env.GITHUB_TOKEN,
+       apiKey: apiKey, // Alterado aqui para usar a variável correta
        baseURL: "https://models.inference.ai.azure.com"
     });
 
