@@ -1,6 +1,8 @@
 name: Teste Local Identik
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
