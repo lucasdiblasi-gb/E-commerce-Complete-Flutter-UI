@@ -13,8 +13,6 @@ jobs:
       - name: Checkout do App
         uses: actions/checkout@v4
 
-      # Importante: Como a Action é local e usa Node.js, 
-      # precisamos instalar as dependências dela antes de rodar
       - name: Install Action Dependencies
         run: |
           cd .github/actions/identik-reviewer
