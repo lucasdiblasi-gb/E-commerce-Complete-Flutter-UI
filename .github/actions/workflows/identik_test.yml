@@ -2,9 +2,14 @@ name: Teste Local Identik
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
+
+permissions:
+  pull-requests: write
+  contents: read
+  repository-projects: read    
 
 jobs:
   ai_review:
