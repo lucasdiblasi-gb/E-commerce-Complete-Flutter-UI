@@ -60,12 +60,7 @@ Identik(id: 'btn_log_in', label: 'Log in', child: ElevatedButton( onPressed: () 
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text("Don't have an account?"),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, signUpScreenRoute);
-                        },
-                        child: const Text("Sign up"),
-                      )
+Identik(id: 'btn_sign_up', label: 'Sign up', child: TextButton( onPressed: () { Navigator.pushNamed(context, signUpScreenRoute); }, child: const Text("Sign up"), ))
                     ],
                   ),
                 ],
