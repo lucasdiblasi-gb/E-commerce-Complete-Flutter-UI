@@ -42,18 +42,40 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: defaultPadding),
                   LogInForm(formKey: _formKey),
                   Align(
-Identik(id: 'btn_forgot_password', label: 'Forgot password', child: TextButton( child: const Text("Forgot password"), onPressed: () { Navigator.pushNamed( context, passwordRecoveryScreenRoute); }, ))
+                    child: TextButton(
+                      child: const Text("Forgot password"),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                            context, passwordRecoveryScreenRoute);
+                      },
+                    ),
+                  ),
                   SizedBox(
                     height: size.height > 700
                         ? size.height * 0.1
                         : defaultPadding,
                   ),
-Identik(id: 'btn_log_in', label: 'Log in', child: ElevatedButton( onPressed: () { if (_formKey.currentState!.validate()) { Navigator.pushNamedAndRemoveUntil( context, entryPointScreenRoute, ModalRoute.withName(logInScreenRoute)); } }, child: const Text("Log in"), ))
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            entryPointScreenRoute,
+                            ModalRoute.withName(logInScreenRoute));
+                      }
+                    },
+                    child: const Text("Log in"),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text("Don't have an account?"),
-Identik(id: 'btn_sign_up', label: 'Sign up', child: TextButton( onPressed: () { Navigator.pushNamed(context, signUpScreenRoute); }, child: const Text("Sign up"), ))
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, signUpScreenRoute);
+                        },
+                        child: const Text("Sign up"),
+                      )
                     ],
                   ),
                 ],

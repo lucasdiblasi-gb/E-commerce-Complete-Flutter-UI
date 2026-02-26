@@ -23,25 +23,37 @@ async function run() {
       const { data: blob } = await octokit.rest.git.getBlob({ owner, repo, file_sha: file.sha });
       const rawContent = Buffer.from(blob.content, 'base64').toString('utf8');
 
-      // Adiciona números de linha para a IA se localizar perfeitamente
+      // Numeração de linhas para a IA se localizar perfeitamente
       const contentWithLines = rawContent.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
 
-      const prompt = `Você é um especialista em Flutter. Analise o código fornecido (que possui números de linha).
-Identifique widgets interativos (Buttons, TextFields, InkWell, GestureDetector) que NÃO estão envolvidos por 'Identik'.
+      const prompt = `Você é um especialista em Flutter, Acessibilidade e Clean Code.
+Analise o código fornecido que possui números de linha e identifique widgets interativos (Buttons, TextFields, InkWell, GestureDetector, Switches) que NÃO estão envolvidos pelo wrapper 'Identik'.
 
-REGRAS RÍGIDAS:
-1. NÃO mude a lógica interna (onPressed, validações, etc). Mantenha EXATAMENTE igual.
-2. Identifique a linha de INÍCIO e a linha de FIM do widget completo.
-3. O 'newCode' deve ser o widget original (sem os números de linha) envolvido por: Identik(id: 'prefixo_nome', label: 'Rótulo', child: ...).
-4. Use prefixos: btn_, input_, ic_, txt_.
+REGRAS DE CONTEÚDO (ACESSIBILIDADE E AUTOMAÇÃO):
+1. 'label': Traduza para PORTUGUÊS BRASILEIRO. Seja conciso (ex: 'Log in' vira 'Entrar'). FOCO: TalkBack.
+2. 'id': Use snake_case com prefixos: btn_, input_, ic_, txt_.
+3. 'button': Se o widget for um botão (ElevatedButton, TextButton, IconButton, etc.), adicione obrigatoriamente 'button: true'.
+4. Mantenha a lógica original (onPressed, validações) EXATAMENTE como está.
+
+REGRAS DE FORMATAÇÃO (ANTI-LINTER):
+1. Gere o 'newCode' com indentação MULTI-LINHA (padrão Dart).
+2. O widget Identik deve envolver o widget original de forma que cada parâmetro fique em uma nova linha para evitar erros de linter.
 
 Retorne APENAS JSON:
-{"suggestions": [{"startLine": 45, "endLine": 52, "newCode": "Identik(...)"}]}`;
+{"suggestions": [{
+  "startLine": 45, 
+  "endLine": 52, 
+  "newCode": "Identik(\\n  id: 'btn_exemplo',\\n  label: 'Texto em PT',\\n  button: true,\\n  child: WidgetOriginal(\\n    ...\\n  ),\\n)"
+}]}`;
 
-      core.info(`🤖 Analisando com precisão: ${file.filename}`);
+      core.info(`🆔 Analisando arquivo: ${file.filename}`);
+      
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
-        messages: [{ role: "system", content: prompt }, { role: "user", content: contentWithLines }],
+        messages: [
+          { role: "system", content: prompt },
+          { role: "user", content: `Arquivo: ${file.filename}\n\n${contentWithLines}` }
+        ],
         response_format: { type: "json_object" },
         temperature: 0
       });
@@ -52,7 +64,7 @@ Retorne APENAS JSON:
         try {
           await octokit.rest.pulls.createReviewComment({
             owner, repo, pull_number,
-            body: `🤖 **Identik AI Review**\nEncapsulando widget para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
+            body: `🆔 **Identik AI Review**\nEncapsulamento para automação e acessibilidade (TalkBack PT-BR).\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
             commit_id: head_sha,
             path: file.filename,
             line: parseInt(s.endLine), 
@@ -64,8 +76,9 @@ Retorne APENAS JSON:
         }
       }
     }
+    core.info("🚀 Revisão concluída!");
   } catch (error) {
-    core.setFailed(`❌ Erro: ${error.message}`);
+    core.setFailed(`❌ Erro Fatal: ${error.message}`);
   }
 }
 run();
