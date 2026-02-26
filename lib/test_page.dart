@@ -55,17 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? size.height * 0.1
                         : defaultPadding,
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            entryPointScreenRoute,
-                            ModalRoute.withName(logInScreenRoute));
-                      }
-                    },
-                    child: const Text("Log in"),
-                  ),
+Identik(id: 'btn_log_in', label: 'Log in', child: ElevatedButton( onPressed: () { if (_formKey.currentState!.validate()) { Navigator.pushNamedAndRemoveUntil( context, entryPointScreenRoute, ModalRoute.withName(logInScreenRoute)); } }, child: const Text("Log in"), ))
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
