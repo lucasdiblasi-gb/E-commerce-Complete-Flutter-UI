@@ -23,47 +23,45 @@ async function run() {
       const { data: blob } = await octokit.rest.git.getBlob({ owner, repo, file_sha: file.sha });
       const content = Buffer.from(blob.content, 'base64').toString('utf8');
 
-      // PROMPT REFORMULADO PARA PRECISÃO
-      const prompt = `Você é um especialista em Flutter e QA. Analise o código fornecido.
-Sua tarefa é encontrar widgets interativos (Buttons, TextFields, InkWell, GestureDetector) que NÃO possuem o wrapper 'Identik'.
+      const prompt = `Você é um especialista em Flutter. Analise o código fornecido e identifique widgets interativos (Buttons, TextFields, InkWell) que NÃO possuem o wrapper 'Identik'.
 
-REGRAS DE OURO:
-1. Mantenha EXATAMENTE a mesma lógica e parâmetros do widget original. NÃO invente lógica extra.
-2. O campo 'oldCode' deve ser o trecho de código ORIGINAL que será substituído.
-3. O campo 'newCode' deve ser o widget original envolvido por: Identik(id: 'prefixo_nome', label: 'Rótulo descritivo', child: WIDGET_ORIGINAL).
-4. Use prefixos: btn_, input_, ic_, txt_.
-5. Identifique a linha de INÍCIO correta do widget.
+REGRAS RÍGIDAS:
+1. Mantenha TODO o código original e lógica interna (onPressed, etc) EXATAMENTE como estão. NÃO invente funções.
+2. Identifique a linha EXATA onde o widget começa (ex: onde começa 'TextButton(' ou 'ElevatedButton(').
+3. O 'newCode' deve ser o widget completo envolvido por: Identik(id: 'prefixo_nome', label: 'Rótulo', child: ...).
+4. Substitua o widget INTEIRO na sugestão, não apenas uma linha.
 
-Responda APENAS com JSON:
-{"suggestions": [{"line": 45, "oldCode": "TextButton(...)", "newCode": "Identik(...)"}]}`;
+Retorne APENAS JSON:
+{"suggestions": [{"line": 45, "newCode": "Identik(...)"}]}`;
 
       core.info(`🤖 Analisando ${file.filename}...`);
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "system", content: prompt }, { role: "user", content }],
         response_format: { type: "json_object" },
-        temperature: 0 // Zero criatividade, foco total em precisão
+        temperature: 0
       });
 
       const result = JSON.parse(response.choices[0].message.content || '{"suggestions": []}');
 
       for (const s of result.suggestions) {
         try {
+          // O GitHub exige que o comentário seja feito em uma linha que faça parte do DIFF
           await octokit.rest.pulls.createReviewComment({
             owner, repo, pull_number,
-            body: `🤖 **Identik AI Review**\nSugestão de encapsulamento para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
+            body: `🤖 **Identik AI Review**\nEncapsulamento para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
             commit_id: head_sha,
             path: file.filename,
             line: parseInt(s.line),
             side: "RIGHT"
           });
         } catch (e) {
-          core.error(`❌ Falha ao comentar na linha ${s.line}: ${e.message}`);
+          core.warning(`⚠️ Não foi possível comentar na linha ${s.line} de ${file.filename}. Pode estar fora do diff.`);
         }
       }
     }
   } catch (error) {
-    core.setFailed(`❌ Erro: ${error.message}`);
+    core.setFailed(`❌ Erro Fatal: ${error.message}`);
   }
 }
 run();
