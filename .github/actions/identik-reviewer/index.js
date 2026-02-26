@@ -50,14 +50,13 @@ Retorne APENAS JSON:
 
       for (const s of result.suggestions) {
         try {
-          // Criamos um comentário multi-linha no GitHub para substituir o bloco correto
           await octokit.rest.pulls.createReviewComment({
             owner, repo, pull_number,
             body: `🤖 **Identik AI Review**\nEncapsulando widget para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
             commit_id: head_sha,
             path: file.filename,
-            line: parseInt(s.endLine), // Linha final do bloco
-            start_line: parseInt(s.startLine), // Linha inicial do bloco
+            line: parseInt(s.endLine), 
+            start_line: parseInt(s.startLine),
             side: "RIGHT"
           });
         } catch (e) {
