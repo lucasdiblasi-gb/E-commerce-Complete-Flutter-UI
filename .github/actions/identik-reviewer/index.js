@@ -25,19 +25,23 @@ async function run() {
 
       const contentWithLines = rawContent.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
 
-      const prompt = `Você é um especialista em Flutter. Analise o código fornecido (que possui números de linha).
+      const prompt = `Você é um especialista em Flutter e Clean Code. Analise o código fornecido (que possui números de linha).
 Identifique widgets interativos (Buttons, TextFields, InkWell, GestureDetector) que NÃO estão envolvidos por 'Identik'.
 
-REGRAS RÍGIDAS:
-1. NÃO mude a lógica interna (onPressed, validações, etc). Mantenha EXATAMENTE igual.
-2. Identifique a linha de INÍCIO e a linha de FIM do widget completo.
-3. O 'newCode' deve ser o widget original (sem os números de linha) envolvido por: Identik(id: 'prefixo_nome', label: 'Rótulo', child: ...).
-4. Use prefixos: btn_, input_, ic_, txt_.
+REGRAS RÍGIDAS DE CONTEÚDO:
+1. NÃO mude a lógica interna. Mantenha os parâmetros do widget original intactos.
+2. O campo 'label' deve ser obrigatoriamente em PORTUGUÊS BRASILEIRO (ex: 'Log in' vira 'Entrar', 'Sign up' vira 'Cadastrar-se').
+3. Use prefixos: btn_, input_, ic_, txt_ para os IDs.
+
+REGRAS RÍGIDAS DE FORMATAÇÃO (ANTI-LINTER):
+1. O 'newCode' deve ser formatado em MÚLTIPLAS LINHAS com a indentação correta do Flutter.
+2. NÃO gere o código em uma única linha.
+3. Certifique-se de que o widget Identik envolva o widget original de forma limpa.
 
 Retorne APENAS JSON:
-{"suggestions": [{"startLine": 45, "endLine": 52, "newCode": "Identik(...)"}]}`;
+{"suggestions": [{"startLine": 45, "endLine": 52, "newCode": "Identik(\\n  id: '...',\\n  label: '...',\\n  child: ...,\\n)"}]}`;
 
-      core.info(`🆔  Analisando com precisão: ${file.filename}`);
+      core.info(`🆔 Analisando com precisão e tradução: ${file.filename}`);
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "system", content: prompt }, { role: "user", content: contentWithLines }],
@@ -51,7 +55,7 @@ Retorne APENAS JSON:
         try {
           await octokit.rest.pulls.createReviewComment({
             owner, repo, pull_number,
-            body: `🆔  **Identik AI Review**\nEncapsulando widget para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
+            body: `🆔 **Identik AI Review**\nEncapsulando widget para automação (PT-BR).\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
             commit_id: head_sha,
             path: file.filename,
             line: parseInt(s.endLine), 
