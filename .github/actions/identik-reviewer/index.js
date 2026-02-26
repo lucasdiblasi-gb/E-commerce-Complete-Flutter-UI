@@ -23,7 +23,6 @@ async function run() {
       const { data: blob } = await octokit.rest.git.getBlob({ owner, repo, file_sha: file.sha });
       const rawContent = Buffer.from(blob.content, 'base64').toString('utf8');
 
-      // Adiciona números de linha para a IA se localizar perfeitamente
       const contentWithLines = rawContent.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n');
 
       const prompt = `Você é um especialista em Flutter. Analise o código fornecido (que possui números de linha).
@@ -38,7 +37,7 @@ REGRAS RÍGIDAS:
 Retorne APENAS JSON:
 {"suggestions": [{"startLine": 45, "endLine": 52, "newCode": "Identik(...)"}]}`;
 
-      core.info(`🤖 Analisando com precisão: ${file.filename}`);
+      core.info(`🆔  Analisando com precisão: ${file.filename}`);
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "system", content: prompt }, { role: "user", content: contentWithLines }],
@@ -52,7 +51,7 @@ Retorne APENAS JSON:
         try {
           await octokit.rest.pulls.createReviewComment({
             owner, repo, pull_number,
-            body: `🤖 **Identik AI Review**\nEncapsulando widget para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
+            body: `🆔  **Identik AI Review**\nEncapsulando widget para automação.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
             commit_id: head_sha,
             path: file.filename,
             line: parseInt(s.endLine), 
@@ -60,12 +59,12 @@ Retorne APENAS JSON:
             side: "RIGHT"
           });
         } catch (e) {
-          core.warning(`⚠️ Falha na sugestão das linhas ${s.startLine}-${s.endLine}: ${e.message}`);
+          core.warning(`Falha na sugestão das linhas ${s.startLine}-${s.endLine}: ${e.message}`);
         }
       }
     }
   } catch (error) {
-    core.setFailed(`❌ Erro: ${error.message}`);
+    core.setFailed(`Erro: ${error.message}`);
   }
 }
 run();
