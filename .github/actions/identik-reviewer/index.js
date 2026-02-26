@@ -8,7 +8,7 @@ async function run() {
     const token = core.getInput('github-token');
     
     if (!github.context.payload.pull_request) {
-      core.info('Fora de um Pull Request. Nada para revisar.');
+      core.info('⚠️ Fora de um Pull Request. Esta Action precisa de um PR para listar arquivos.');
       return;
     }
 
@@ -22,12 +22,24 @@ async function run() {
     const pull_number = github.context.payload.pull_request.number;
     const head_sha = github.context.payload.pull_request.head.sha;
 
-    const { data: files } = await octokit.rest.pulls.listFiles({ owner, repo, pull_number });
+    core.info(`📦 Verificando arquivos no PR #${pull_number}...`);
+
+    // Busca os arquivos
+    const { data: files } = await octokit.rest.pulls.listFiles({
+      owner, repo, pull_number
+    });
+
+    core.info(`📂 Total de arquivos modificados detectados: ${files.length}`);
 
     for (const file of files) {
-      if (!file.filename.endsWith('.dart') || file.status === 'removed') continue;
+      core.info(`📄 Checando arquivo: ${file.filename} (Status: ${file.status})`);
+      
+      if (!file.filename.endsWith('.dart') || file.status === 'removed') {
+        core.info(`⏭️ Pulando ${file.filename} (Não é Dart ou foi removido)`);
+        continue;
+      }
 
-      core.info(`🔍 Analisando: ${file.filename}`);
+      core.info(`🔍 ANALISANDO: ${file.filename}`);
 
       const { data: responseData } = await octokit.rest.repos.getContent({
         owner, repo, path: file.path, ref: head_sha
@@ -35,44 +47,26 @@ async function run() {
 
       const content = Buffer.from(responseData.content, 'base64').toString('utf8');
 
-      // PROMPT MAIS AGRESSIVO E DETALHADO
-      const prompt = `Você é um revisor de código sênior em Flutter.
-Analise o código abaixo e identifique TODOS os widgets interativos (ElevatedButton, TextButton, IconButton, GestureDetector, InkWell, TextField, Switch) que NÃO estão dentro de um widget 'Identik'.
+      const prompt = `Você é um especialista em Flutter. Analise o código e sugira o wrapper Identik para widgets interativos sem ID.
+      Prefixos: btn_, input_, ic_, txt_.
+      Retorne APENAS um JSON: {"suggestions": [{"line": 10, "newCode": "Identik(...)"}]}`;
 
-Para cada um, sugira envolver o widget com: Identik(id: 'prefixo_nome', label: 'Descrição', child: widget).
-Prefixos obrigatórios: btn_, input_, ic_, txt_.
-
-IMPORTANTE: 
-1. Responda APENAS com um JSON.
-2. Identifique o número correto da linha onde o widget começa.
-3. O 'newCode' deve ser o widget original refatorado com Identik.
-
-Formato: {"suggestions": [{"line": 15, "newCode": "Identik(...)"}]}`;
-
-      core.info(`🤖 Enviando para IA...`);
+      core.info(`🤖 Chamando IA para ${file.filename}...`);
       
       const response = await openai.chat.completions.create({
         model: "gpt-4o", 
-        messages: [
-          { role: "system", content: prompt },
-          { role: "user", content: `Arquivo: ${file.filename}\n\nCódigo:\n${content}` }
-        ],
-        temperature: 0.2, // Mais determinístico
+        messages: [{ role: "system", content: prompt }, { role: "user", content: content }],
         response_format: { type: "json_object" },
       });
 
       const result = JSON.parse(response.choices[0].message.content || '{"suggestions": []}');
-      
-      // LOG DOS RESULTADOS (Para você ver o que a IA pensou no console da Action)
       core.info(`✅ IA retornou ${result.suggestions?.length || 0} sugestões.`);
 
       if (result.suggestions && result.suggestions.length > 0) {
         for (const s of result.suggestions) {
-          core.info(`📌 Aplicando sugestão na linha ${s.line}`);
-          
           await octokit.rest.pulls.createReviewComment({
             owner, repo, pull_number,
-            body: `🤖 **Identik AI Review**\nDetectei um componente interativo sem identificação. Recomendo envolver com o Identik para facilitar a automação com Maestro.\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
+            body: `💡 **Identik AI Suggestion**\n\n\`\`\`suggestion\n${s.newCode}\n\`\`\``,
             commit_id: head_sha,
             path: file.filename,
             line: parseInt(s.line),
@@ -81,9 +75,9 @@ Formato: {"suggestions": [{"line": 15, "newCode": "Identik(...)"}]}`;
         }
       }
     }
-    core.info("🚀 Revisão finalizada com sucesso!");
+    core.info("🚀 Processo concluído!");
   } catch (error) {
-    core.setFailed(`❌ Erro na Action: ${error.message}`);
+    core.setFailed(`❌ Erro: ${error.message}`);
   }
 }
 
