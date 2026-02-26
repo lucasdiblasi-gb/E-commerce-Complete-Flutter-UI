@@ -42,14 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: defaultPadding),
                   LogInForm(formKey: _formKey),
                   Align(
-                    child: TextButton(
-                      child: const Text("Forgot password"),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                            context, passwordRecoveryScreenRoute);
-                      },
-                    ),
-                  ),
+Identik(id: 'btn_forgot_password', label: 'Forgot password', child: TextButton( child: const Text("Forgot password"), onPressed: () { Navigator.pushNamed( context, passwordRecoveryScreenRoute); }, ))
                   SizedBox(
                     height: size.height > 700
                         ? size.height * 0.1
